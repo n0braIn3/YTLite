@@ -96,7 +96,7 @@ jobs:
 
       - name: Download and validate IPA
         env:
-          IPA_URL: ${{ inputs.ipa_url }}
+          IPA_URL: ${{ secrets.SECRET_IPA_URL }}
         run: |
           wget "$IPA_URL" --no-verbose -O youtube.ipa
           file_type=$(file --mime-type -b youtube.ipa)

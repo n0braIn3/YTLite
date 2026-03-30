@@ -7,37 +7,30 @@ on:
         type: boolean
         required: true
         default: false
-
       enable_ytuhd:
         type: boolean
         required: true
         default: false
-
       enable_yq:
         type: boolean
         required: true
         default: false
-
       enable_ryd:
         type: boolean
         required: true
         default: false
-
       enable_ytabc:
         type: boolean
         required: true
         default: false
-
       enable_demc:
         type: boolean
         required: true
         default: false
-
       tweak_version:
         type: string
         required: false
         default: ""
-
       tweak_url:
         type: string
         required: false
@@ -60,7 +53,7 @@ jobs:
       - name: Cache Theos
         if: ${{ inputs.enable_youpip || inputs.enable_ytuhd || inputs.enable_yq || inputs.enable_ryd || inputs.enable_ytabc || inputs.enable_demc }}
         id: theos
-        uses: actions/cache@v5
+        uses: actions/cache@v4 # Updated to v4 
         env:
           cache-name: theos_cache_13c2237
         with:
@@ -70,7 +63,7 @@ jobs:
 
       - name: Setup Theos
         if: ${{ (inputs.enable_youpip || inputs.enable_ytuhd || inputs.enable_yq || inputs.enable_ryd || inputs.enable_ytabc || inputs.enable_demc) && steps.theos.outputs.cache-hit != 'true' }}
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4 # Updated to v4
         with:
           repository: theos/theos
           ref: 13c22376b5d83ff759c1993de0a861e673aa522b
@@ -88,14 +81,18 @@ jobs:
 
       - name: Download YouTube Plus (by version)
         if: ${{ inputs.tweak_version != '' }}
+        env:
+          TWEAK_VERSION: ${{ inputs.tweak_version }}
         run: |
-          deb_url="https://github.com/dayanch96/YTLite/releases/download/v${{ inputs.tweak_version }}/com.dvntm.ytlite_${{ inputs.tweak_version }}_iphoneos-arm.deb"
+          deb_url="https://github.com/dayanch96/YTLite/releases/download/v${TWEAK_VERSION}/com.dvntm.ytlite_${TWEAK_VERSION}_iphoneos-arm.deb"
           wget "$deb_url" --no-verbose -O ytplus.deb
 
       - name: Download YouTube Plus (by URL)
         if: ${{ inputs.tweak_url != '' }}
+        env:
+          TWEAK_URL: ${{ inputs.tweak_url }}
         run: |
-          wget "${{ inputs.tweak_url }}" --no-verbose -O ytplus.deb
+          wget "$TWEAK_URL" --no-verbose -O ytplus.deb
           file_type=$(file --mime-type -b ytplus.deb)
           if [[ "$file_type" != "application/vnd.debian.binary-package" ]]; then
             echo "::error::Validation failed: The file is not a valid DEB file. Detected type: $file_type."
@@ -213,7 +210,7 @@ jobs:
           mv *.appex ..
 
       - name: Upload built debs as artifacts
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v4 # Updated to v4
         with:
           name: built-debs
           path: |

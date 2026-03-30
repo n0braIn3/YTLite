@@ -8,61 +8,51 @@ on:
         type: boolean
         required: true
         default: false
-
       enable_ytuhd:
         description: "Integrate YTUHD"
         type: boolean
         required: true
         default: false
-
       enable_yq:
         description: "Integrate YouQuality"
         type: boolean
         required: true
         default: false
-
       enable_ryd:
         description: "Integrate Return YouTube Dislikes"
         type: boolean
         required: true
         default: false
-
       enable_ytabc:
         description: "Integrate YTABConfig"
         type: boolean
         required: true
         default: false
-
       enable_demc:
         description: "Integrate DontEatMyContent"
         type: boolean
         required: true
         default: false
-
       ipa_url:
         description: "URL to the decrypted IPA file"
         default: ""
         required: true
         type: string
-
       tweak_url:
         description: "URL to the YouTube Plus tweak file"
         default: ""
         required: true
         type: string
-
       display_name:
         description: "App Name (Optional)"
         default: "YouTube"
         required: true
         type: string
-
       bundle_id:
         description: "BundleID (Optional)"
         default: "com.google.ios.youtube"
         required: true
         type: string
-
       info_note:
         description: "TIP: Learn more about integrations in the README via the link below"
         default: "https://github.com/dayanch96/YTLite#tweak-integration-details"
@@ -94,7 +84,7 @@ jobs:
 
     steps:
       - name: Download built debs
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v4
         with:
           name: built-debs
           path: ${{ github.workspace }}
@@ -105,8 +95,10 @@ jobs:
           exclude_inputs: bundle_id,display_name,enable_demc,enable_ryd,enable_ytabc,enable_youpip,enable_yq,enable_ytuhd,info_note
 
       - name: Download and validate IPA
+        env:
+          IPA_URL: ${{ inputs.ipa_url }}
         run: |
-          wget "${{ github.event.inputs.ipa_url }}" --no-verbose -O youtube.ipa
+          wget "$IPA_URL" --no-verbose -O youtube.ipa
           file_type=$(file --mime-type -b youtube.ipa)
           if [[ "$file_type" != "application/x-ios-app" && "$file_type" != "application/zip" ]]; then
             echo "::error::Validation failed: The downloaded file is not a valid IPA. Detected type: $file_type."
@@ -116,17 +108,19 @@ jobs:
       - name: Install cyan
         run: pipx install --force https://github.com/asdfzxcvbn/pyzule-rw/archive/main.zip
 
-
       - name: Inject tweaks into IPA
+        env:
+          DISPLAY_NAME: ${{ inputs.display_name }}
+          BUNDLE_ID: ${{ inputs.bundle_id }}
         run: |
           tweaks="ytplus.deb OpenYoutubeSafariExtension.appex"
           for f in *.deb; do
             [ -f "$f" ] && tweaks="$tweaks $f"
           done
-          cyan -i youtube.ipa -o YouTubePlus_Beta.ipa -uwef $tweaks -n "${{ github.event.inputs.display_name }}" -b ${{ github.event.inputs.bundle_id }}
+          cyan -i youtube.ipa -o YouTubePlus_Beta.ipa -uwef $tweaks -n "$DISPLAY_NAME" -b "$BUNDLE_ID"
 
       - name: Upload to GitHub Releases
-        uses: softprops/action-gh-release@v2.5.0
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: ytp-beta-${{ github.run_number }}
           name: YouTubePlus Beta (${{ github.run_number }})
